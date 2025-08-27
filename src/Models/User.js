@@ -89,7 +89,10 @@ const userSchema = new mongoose.Schema({
   profilePicture: {
     type: String
   },
-  posts: [],
+  posts: [{
+    type : mongoose.Schema.Types.ObjectId,
+    ref : "Post"
+  }],
   followers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
   following: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
   blocked: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],

@@ -115,7 +115,7 @@ router.post("/auth/signin", async (req, res) => {
 
     const foundUser = await User.findOne({
       $or: [{ username }, { mail }],
-    });
+    }).populate('posts');
 
     if (!foundUser) {
       return res.status(404).json({ error: "User does not exist" });
@@ -135,7 +135,7 @@ router.post("/auth/signin", async (req, res) => {
       { expiresIn: "1d" }
     );
 
-    res.cookie("jwt-token", token);
+    res.cookie("token", token);
 
     res.status(200).json({
       msg: "Signin successfully",
@@ -164,7 +164,7 @@ router.post("/auth/signin", async (req, res) => {
 //LOGOUT
 router.post('/auth/logout', async (req, res) => {
   try {
-    res.cookie("jwt-token",null).status(200).json({ msg: "User logged out successfully" });
+    res.cookie("token",null).status(200).json({ msg: "User logged out successfully" });
   } catch (error) {
     res.status(400).json({ error: "Something went wrong during logout" });
   }
