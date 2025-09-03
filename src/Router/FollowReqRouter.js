@@ -143,6 +143,58 @@ router.patch(
   }
 );
 
+//Unfollow Request
+router.patch("/follow-requesr/unfollow/:id", isLoggedIn, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const foundUser = await User.findById(id);
+    if (!foundUser) {
+      throw new Error("User not Found (unfollow 152)");
+    }
+    if (
+      foundUser.followers.some((item) => {
+        return item.toString() == req.user._id.toString();
+      })
+    ) {
+      const filtredFollowers = foundUser.followers.filter((item) => {
+        return item.toString() != req.user._id.toString();
+      });
+      foundUser.followers = filtredFollowers;
+      await foundUser.save();
+
+      const filtredFollowing = foundUser.following.filter((item)=>{
+        return item.toString() != foundUser._id.toString()
+      })
+
+      req.user.following = filtredFollowing
+      await req.user.save()
+
+      await FollowRequest.deleteOne({
+        $or:[
+          {
+            $and : [
+              {fromUserId : id},
+              {toUserId : req.user._id}
+            ]},
+          {
+            $and : [
+              {fromUserId : req.user._id},
+              {toUserId : id}
+            ]
+          }
+        ]
+      })
+
+    } else {
+      throw new Error("Invalid Operation(unfollow(165))");
+    }
+    res.status(200).json({msg : "Unfollow Done"})
+  } catch (error) {
+    res.status(400).json({error : error.message})
+
+  }
+});
+
 // Block User Route
 router.patch("/follow-request/block/:userId", isLoggedIn, async (req, res) => {
   try {
@@ -201,17 +253,31 @@ router.patch("/follow-request/block/:userId", isLoggedIn, async (req, res) => {
 
     await req.user.save();
 
+      await FollowRequest.deleteOne({
+        $or:[
+          {
+            $and : [
+              {fromUserId : userId},
+              {toUserId : req.user._id}
+            ]},
+          {
+            $and : [
+              {fromUserId : req.user._id},
+              {toUserId : userId}
+            ]
+          }
+        ]
+      })
+
     // Success response
     res
       .status(200)
       .json({ msg: `User ${foundUser.username} blocked successfully` });
   } catch (error) {
     // Centralized error handler
-    res
-      .status(400)
-      .json({
-        error: error.message || "Something went wrong while blocking user",
-      });
+    res.status(400).json({
+      error: error.message || "Something went wrong while blocking user",
+    });
   }
 });
 
@@ -242,7 +308,6 @@ router.patch(
     }
   }
 );
-
 
 module.exports = {
   router,

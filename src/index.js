@@ -8,6 +8,7 @@ const { router: otpRouter } = require("./Router/OtpRouter");
 const { router: authRouter } = require("./Router/AuthRoutes");
 const { router: postRouter } = require("./Router/PostRoutes");
 const { router: followReqRouter } = require("./Router/FollowReqRouter");
+const { router:commentRouter  } = require("./Router/CommentRouter");
 
 app.use(express.json());
 app.use(cors());
@@ -16,6 +17,7 @@ app.use("/api", otpRouter);
 app.use("/api", authRouter);
 app.use("/api", postRouter);
 app.use("/api", followReqRouter);
+app.use("/api", commentRouter);
 
 mongoose
   .connect(process.env.MONGO_URL) // ✅ correct key
