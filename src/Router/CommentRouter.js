@@ -3,6 +3,7 @@ const { isLoggedIn } = require("../Middlewares/isLoggedIn");
 const router = express.Router();
 const { Post } = require("../Models/Posts");
 const { Comment } = require("../Models/Comment");
+const { Reply } = require("../Models/Reply");
 
 //Add comments
 router.post("/comments/:postId", isLoggedIn, async (req, res) => {
@@ -121,6 +122,47 @@ router.post(
   }
 );
 
+router.post("/comments/:postId/:commentId/reply",isLoggedIn,async (req, res) => {
+    try {
+      const { postId, commentId } = req.params;
+      const { text } = req.body;
+      const foundPost = await Post.findById(postId).populate("author");
+      if (!foundPost) {
+        throw new Error("Post not found");
+      }
+
+      const foundComment = await Comment.findById(commentId);
+      if (!foundComment) {
+        throw new Error("Comment not found");
+      }
+
+      if (foundPost.comments.some((item) => item.toString() == commentId)) {
+        if (foundPost.author.isPrivate) {
+          if (
+            foundPost.author.followers.some(
+              (item) => item.toString() == req.user._id.toString()
+            )
+          ) {
+            const newReply = await Reply.create({ text, author: req.user._id });
+            foundComment.reply.push(newReply._id);
+            await foundComment.save();
+          } else {
+            throw new Error("Invalid Operation 147 Not follow");
+          }
+        } else {
+          const newReply = await Reply.create({ text, author: req.user._id });
+          foundComment.reply.push(newReply._id);
+          await foundComment.save();
+        }
+      } else {
+        throw new Error("Invalid Operation Reply 161");
+      }
+      res.status(201).json({msg : 'Done reply' ,data : foundPost})
+    } catch (error) {
+      res.status(400).json({error: error.message})
+    }
+  }
+);
 
 module.exports = {
   router,

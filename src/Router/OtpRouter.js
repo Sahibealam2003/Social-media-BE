@@ -31,7 +31,6 @@ router.post("/otp/send-otp", otpLimiter ,async (req, res) => {
     }
 
     const otp = generateOTP();
-    console.log("Generated OTP:", otp);
 
     // Send email
     await transporter.sendMail({

@@ -9,7 +9,7 @@ const { router: authRouter } = require("./Router/AuthRoutes");
 const { router: postRouter } = require("./Router/PostRoutes");
 const { router: followReqRouter } = require("./Router/FollowReqRouter");
 const { router:commentRouter  } = require("./Router/CommentRouter");
-
+app.set('trust proxy',1)
 app.use(express.json());
 app.use(cors());
 app.use(cookieParser());
