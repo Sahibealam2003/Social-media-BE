@@ -12,7 +12,7 @@ const postSchema = new mongoose.Schema({
     maxlength : 20,
     trim : true
 },
-  comments: [],
+  comments: [{type : mongoose.Schema.Types.ObjectId, ref : "Comment"}],
   likes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
   media: [{ type: String, required: true }],
   author: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }
