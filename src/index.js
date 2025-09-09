@@ -11,7 +11,10 @@ const { router: followReqRouter } = require("./Router/FollowReqRouter");
 const { router:commentRouter  } = require("./Router/CommentRouter");
 app.set('trust proxy',1)
 app.use(express.json());
-app.use(cors());
+app.use(cors({
+  origin : process.env.ORIGIN,
+  credentials : true
+}));
 app.use(cookieParser());
 app.use("/api", otpRouter);
 app.use("/api", authRouter);

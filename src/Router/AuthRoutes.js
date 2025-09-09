@@ -115,7 +115,13 @@ router.post("/auth/signin", async (req, res) => {
 
     const foundUser = await User.findOne({
       $or: [{ username }, { mail }],
-    }).populate('posts');
+    }).populate({
+      path : "posts",
+      populate : [
+        {path : 'likes'},
+        {path : 'comments'}
+      ]
+    });
 
     if (!foundUser) {
       return res.status(404).json({ error: "User does not exist" });
