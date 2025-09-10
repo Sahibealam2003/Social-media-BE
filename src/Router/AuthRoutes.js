@@ -5,6 +5,7 @@ const { User } = require("../Models/User");
 const bcrypt = require("bcrypt");
 const { VerifiedMail } = require("../Models/VerifiedMail");
 const jwt = require("jsonwebtoken");
+const{isLoggedIn} = require("../Middlewares/isLoggedIn")
 
 function getAgeFromDOB(dateString) {
   const birthDate = new Date(dateString);
@@ -176,5 +177,13 @@ router.post('/auth/logout', async (req, res) => {
   }
 });
 
+//Get add User Data
+router.get("/auth/get-user-data", isLoggedIn, async(req, res) => {
+    try {
+        res.status(200).json({data : req.user})
+    } catch (error) {
+        res.status(400).json({error : error.message})
+    }
+})
 
 module.exports = { router };
