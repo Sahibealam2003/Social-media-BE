@@ -11,7 +11,7 @@ router.post("/posts/create", isLoggedIn, async (req, res) => {
     const { caption, location, media } = req.body;
 
     // Validation: Media is required
-    if (!media) {
+    if (!media.length) {
       throw new Error("Posts must contain at least one media file");
     }
 

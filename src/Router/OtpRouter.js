@@ -20,7 +20,7 @@ function generateOTP() {
 }
 
 // Route to send OTP to a given email
-router.post("/otp/send-otp", async (req, res) => {
+router.post("/otp/send-otp", otpLimiter,async (req, res) => {
   try {
     const { email } = req.body;
 

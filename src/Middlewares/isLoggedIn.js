@@ -11,7 +11,7 @@ const isLoggedIn = async (req, res, next) => {
 
     const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
 
-    const foundUser = await User.findOne({_id:decodedToken._id});
+    const foundUser = await User.findOne({_id:decodedToken._id}).populate('posts');
     if (!foundUser) {
       throw new Error('Please log in');
     }   
