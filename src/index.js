@@ -9,6 +9,7 @@ const { router: authRouter } = require("./Router/AuthRoutes");
 const { router: postRouter } = require("./Router/PostRoutes");
 const { router: followReqRouter } = require("./Router/FollowReqRouter");
 const { router:commentRouter  } = require("./Router/CommentRouter");
+const { router:profileRouter  } = require("./Router/ProfileRouter");
 app.set('trust proxy',1)
 // app.use(express.json())
 app.use(express.json({limit : '30mb'}));
@@ -24,6 +25,7 @@ app.use("/api", authRouter);
 app.use("/api", postRouter);
 app.use("/api", followReqRouter);
 app.use("/api", commentRouter);
+app.use("/api", profileRouter);
 
 mongoose
   .connect(process.env.MONGO_URL) // ✅ correct key

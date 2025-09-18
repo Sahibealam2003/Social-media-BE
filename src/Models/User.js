@@ -45,6 +45,7 @@ const userSchema = new mongoose.Schema({
     trim: true,
     required: true,
     unique: true,
+    immutable : true,
     validate(val) {
       if (!validator.isEmail(val)) {
         throw new Error("Please enter a valid email address(User Schema)");
@@ -58,6 +59,7 @@ const userSchema = new mongoose.Schema({
     required: true,
   },
   dateOfBirth: {
+    immutable:true,
     type: Date,
     required: true,
     validate : function (val) {
@@ -72,6 +74,7 @@ const userSchema = new mongoose.Schema({
     },
   },
   gender: {
+    immutable:true,
     type: String,
     enum: {
       values: ["male", "female", "other"],
