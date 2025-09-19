@@ -9,7 +9,7 @@ const { FollowRequest } = require("../Models/FollowRequest");
  * Purpose: Send a follow request to another user
  * Access: Protected (only logged-in users)
  */
-router.post("/follow-request/:toUserId", isLoggedIn, async (req, res) => {
+router.post("/follow-requests/:toUserId", isLoggedIn, async (req, res) => {
   try {
     const { toUserId } = req.params;
 
@@ -37,7 +37,7 @@ router.post("/follow-request/:toUserId", isLoggedIn, async (req, res) => {
     }
 
     // Check if target user exists
-    const targetUser = await User.findById(toUserId);
+    const targetUser = await User.findById(toUserId).populate('posts');
     if (targetUser.blocked.some((id) => id.equals(req.user._id))) {
       throw new Error("You are blocked");
     }
@@ -46,17 +46,20 @@ router.post("/follow-request/:toUserId", isLoggedIn, async (req, res) => {
     }
 
     // If user is private -> create a pending request
-    if (targetUser.isPrivate) {
-      await FollowRequest.create({
-        toUserId,
-        fromUserId: req.user._id,
-        status: "pending",
-      });
+   if (targetUser.isPrivate) {
+  await FollowRequest.create({
+    toUserId,
+    fromUserId: req.user._id,
+    status: "pending",
+  });
 
-      return res.status(200).json({
-        msg: `Follow request sent to user: ${targetUser.username}`,
-      });
-    }
+  return res.status(200).json({
+    msg: `Follow request sent to user: ${targetUser.username}`,
+    data: req.user,        // current user (no change in following yet)
+    toUserData: targetUser // target user
+  });
+}
+
 
     // If user is public -> auto accept follow request
     await FollowRequest.create({
@@ -73,9 +76,12 @@ router.post("/follow-request/:toUserId", isLoggedIn, async (req, res) => {
     req.user.following.push(toUserId);
     await req.user.save();
 
-    return res.status(200).json({
-      msg: `Now following user: ${targetUser.username}`,
-    });
+return res.status(200).json({
+  msg: `Now following user: ${targetUser.username}`,
+  data: req.user,          // updated current user
+  toUserData: targetUser   // updated target user
+});
+
   } catch (error) {
     console.error("Error in follow request:", error.message);
 
@@ -144,10 +150,10 @@ router.patch(
 );
 
 //Unfollow Request
-router.patch("/follow-requesr/unfollow/:id", isLoggedIn, async (req, res) => {
+router.patch("/follow-requests/unfollow/:id", isLoggedIn, async (req, res) => {
   try {
     const { id } = req.params;
-    const foundUser = await User.findById(id);
+    const foundUser = await User.findById(id).populate("posts")
     if (!foundUser) {
       throw new Error("User not Found (unfollow 152)");
     }
@@ -188,7 +194,7 @@ router.patch("/follow-requesr/unfollow/:id", isLoggedIn, async (req, res) => {
     } else {
       throw new Error("Invalid Operation(unfollow(165))");
     }
-    res.status(200).json({msg : "Unfollow Done"})
+     res.status(200).json({msg : "done", data : req.user, toUserData : foundUser})
   } catch (error) {
     res.status(400).json({error : error.message})
 
