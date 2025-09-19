@@ -186,4 +186,38 @@ router.get("/auth/get-user-data", isLoggedIn, async(req, res) => {
     }
 })
 
+//Change Password
+router.patch("/auth/change-password", isLoggedIn, async (req, res) => {
+    try {
+        const { oldPassword, newPassword } = req.body
+
+        // Compare old password with the current hashed password
+        const flag = await bcrypt.compare(oldPassword, req.user.password)
+
+        if (!flag) {
+            throw new Error("Invalid Operation / Access Denied: Old password does not match")
+        }
+
+        // Validate new password strength
+        const isPasswordStrong = validator.isStrongPassword(newPassword)
+        if (!isPasswordStrong) {
+            throw new Error("Please enter a strong password (include uppercase, lowercase, number, and symbol)")
+        }
+
+        // Hash the new password before saving
+        const newHashedPassword = await bcrypt.hash(newPassword, 10)
+
+        // Update and save the new password
+        req.user.password = newHashedPassword
+        await req.user.save()
+
+        res.status(200).json({ msg: "Password changed successfully" })
+
+    } catch (error) {
+        // Catch unexpected errors
+        res.status(400).json({ error: error.message || "Failed to change password" })
+    }
+})
+
+
 module.exports = { router };

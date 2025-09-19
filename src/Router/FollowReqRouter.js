@@ -309,6 +309,32 @@ router.patch(
   }
 );
 
+
+// Search Users
+router.get("/follow-requests/search", isLoggedIn, async(req, res) => {
+    try {
+        const{q} = req.query
+         const foundUsers = await User.find({
+                $and: [
+                    { _id: { $ne: req.user._id } },
+                    {
+                    $or: [
+                        { firstName: { $regex: q, $options: "i" } },
+                        { lastName: { $regex: q, $options: "i" } },
+                        { username: { $regex: q, $options: "i" } }
+                    ]
+                    }
+                ]
+                }
+                )
+            .select("profilePicture firstName lastName username ")
+
+        res.status(200).json({data : foundUsers})
+
+    } catch (error) {
+        res.status(400).json({error : error.message})
+    }
+})
 module.exports = {
   router,
 };
