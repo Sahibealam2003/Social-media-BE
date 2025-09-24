@@ -341,6 +341,48 @@ router.get("/follow-requests/search", isLoggedIn, async(req, res) => {
         res.status(400).json({error : error.message})
     }
 })
+
+
+router.get("/follow-requests/check/:toUserId", isLoggedIn, async(req, res) => {
+    try {
+        const{toUserId} = req.params
+        const flag = await FollowRequest.findOne({
+            toUserId : toUserId,
+            fromUserId : req.user._id
+        })
+        res.status(200).json({flag : (flag ? true : false), status : flag?.status})
+    } catch (error) {
+        res.status(400).json({error : error.message})
+    }
+})
+
+
+router.delete("/follow-requests/:userId", isLoggedIn, async(req, res) => {
+    try {
+        const{userId} = req.params
+        const flag = await FollowRequest.findOneAndDelete({
+            toUserId : userId,
+            fromUserId : req.user._id
+        })
+        console.log(flag)
+        res.status(200).json({msg : "done"})
+    } catch (error) {
+        res.status(400).json({error : error.message})
+    }
+})
+
+router.get("/follow-requests", isLoggedIn, async(req, res) => {
+    try {
+        const foundRequests = await FollowRequest.find({
+            toUserId : req.user._id,
+            status : "pending"
+        }).populate("fromUserId")
+
+        res.status(200).json({data : foundRequests})
+    } catch (error) {
+        res.status(400).json({error : error.message})
+    }
+})
 module.exports = {
   router,
 };

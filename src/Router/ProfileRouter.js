@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const { isLoggedIn } = require("../Middlewares/isLoggedIn");
 const { User } = require("../Models/User");
+const { FollowRequest } = require("../Models/FollowRequest")
 
 // --------------------- Update Profile Info ---------------------
 router.patch("/profile/:userId", isLoggedIn, async (req, res) => {
@@ -95,69 +96,54 @@ router.patch("/profile/:userId/privacy", isLoggedIn, async (req, res) => {
   }
 });
 
-router.get("/profile/:userId", isLoggedIn, async (req, res) => {
-  try {
-    const { userId } = req.params;
-    const foundUser = await User.findById(userId).populate("posts");
+router.get("/profile/:userId", isLoggedIn, async(req, res) => {
+    try {
+        const{userId} = req.params
+        const foundUser = await User.findById(userId).populate("posts")
 
-    if (!foundUser) {
-      throw new Error("Account does not exist");
-    }
+        if(!foundUser)
+        {
+            throw new Error("Account does not exist")
+        }
 
-    const {
-      firstName,
-      lastName,
-      username,
-      // mail,
-      // password,
-      // dateOfBirth,
-      // gender,
-      bio,
-      profilePicture,
-      posts,
-      followers,
-      following,
-      // blocked,
-      isPrivate,
-    } = foundUser;
-
-    if (foundUser.isPrivate) {
-      res
-        .status(200)
-        .json({
-          msg: "done",
-          data: {
+        const {
             firstName,
             lastName,
             username,
-            profilePicture,
-            bio,
-            posts: posts.length,
-            followers: followers.length,
-            following: following.length,
-            isPrivate,
-          },
-        });
-    } else {
-      res
-        .status(200)
-        .json({
-          msg: "done",
-          data: {
-            firstName,
-            lastName,
-            username,
+            // mail,
+            // password,
+            // dateOfBirth,
+            // gender,
             bio,
             profilePicture,
             posts,
             followers,
             following,
-            isPrivate,
-          },
-        });
+            // blocked,
+            isPrivate
+            } = foundUser
+
+
+            const isFollowing = req.user.following.some(item => item.toString() == userId)
+            const isReqSent = await FollowRequest.findOne({
+                toUserId : userId,
+                fromUserId : req.user._id,
+                status : "pending"
+            })
+
+
+        if(foundUser.isPrivate && !isFollowing)
+        {
+            res.status(200).json({msg : "done, isPrivate", data : {firstName, lastName, username, profilePicture, bio, posts : posts.length, followers : followers.length, following : following.length, isPrivate, reqAlreadySent : (isReqSent ? true : false)}})
+        }
+        else
+        {
+            res.status(200).json({msg : "done", data : {firstName, lastName, username, bio, profilePicture, posts, followers, following, isPrivate}})
+        }
+    } catch (error) {
+        
     }
-  } catch (error) {}
-});
+})
 
 module.exports = {
   router,
