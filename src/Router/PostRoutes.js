@@ -4,6 +4,129 @@ const { isLoggedIn } = require("../Middlewares/isLoggedIn");
 const { Post } = require("../Models/Posts");
 const { isAuthor } = require("../Middlewares/isAuthor");
 
+
+
+
+const { default: mongoose } = require("mongoose")
+
+
+router.get("/posts/feed", isLoggedIn, async (req, res) => {
+  try {
+    const myUserObj = req.user
+    const allowedAuthors = [myUserObj._id, ...myUserObj.following]
+
+    const dbRes = await Post.aggregate([
+      // 1️⃣ Only include posts from me + people I follow
+      {
+        $match: {
+          author: { $in: allowedAuthors },
+        },
+      },
+
+      // 2️⃣ Populate author info
+      {
+        $lookup: {
+          from: "users",
+          localField: "author",
+          foreignField: "_id",
+          as: "author",
+        },
+      },
+      { $unwind: "$author" },
+
+      // 3️⃣ Populate comments
+      {
+        $lookup: {
+          from: "comments",
+          localField: "comments",
+          foreignField: "_id",
+          as: "comments",
+        },
+      },
+
+      // 4️⃣ Populate comment author (nested $lookup)
+      {
+        $lookup: {
+          from: "users",
+          localField: "comments.author",
+          foreignField: "_id",
+          as: "commentAuthors",
+        },
+      },
+
+      // 5️⃣ Merge commentAuthors back into each comment
+      {
+        $addFields: {
+          comments: {
+            $map: {
+              input: "$comments",
+              as: "c",
+              in: {
+                _id: "$$c._id",
+                text: "$$c.text",
+                likes: "$$c.likes",
+                reply: "$$c.reply",
+                author: {
+                  $arrayElemAt: [
+                    {
+                      $filter: {
+                        input: "$commentAuthors",
+                        as: "ca",
+                        cond: { $eq: ["$$ca._id", "$$c.author"] },
+                      },
+                    },
+                    0,
+                  ],
+                },
+              },
+            },
+          },
+        },
+      },
+
+      // 6️⃣ Add extra fields
+      {
+        $addFields: {
+          likesCount: { $size: "$likes" },
+          commentsCount: { $size: "$comments" },
+          isLikedByMe: { $in: [myUserObj._id, "$likes"] },
+        },
+      },
+
+      // 7️⃣ Final projection
+      {
+        $project: {
+          _id: 1,
+          caption: 1,
+          location: 1,
+          media: 1,
+          createdAt: 1,
+          likesCount: 1,
+          commentsCount: 1,
+          isLikedByMe: 1,
+          "author._id": 1,
+          "author.username": 1,
+          "author.profilePicture": 1,
+          "author.isPrivate": 1,
+          "comments._id": 1,
+          "comments.text": 1,
+          "comments.likes": 1,
+          "comments.reply": 1,
+          "comments.author._id": 1,
+          "comments.author.username": 1,
+          "comments.author.profilePicture": 1,
+        },
+      },
+
+      { $sort: { createdAt: -1 } },
+    ])
+
+    res.status(200).json({ data: dbRes })
+  } catch (error) {
+    res.status(400).json({ error: error.message })
+  }
+})
+
 // Route: Create a new post
 // Access: Logged-in users only
 router.post("/posts/create", isLoggedIn, async (req, res) => {

@@ -95,7 +95,7 @@ return res.status(200).json({
 
 // Review Follow Request Route (Accept / Reject)
 router.patch(
-  "/follow-request/review/:id/:status",
+  "/follow-requests/review/:id/:status",
   isLoggedIn,
   async (req, res) => {
     try {
